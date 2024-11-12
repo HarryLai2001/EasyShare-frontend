@@ -16,7 +16,6 @@ import { countsIncr, countsInit } from './store/modules/systemMessageCountStore'
 
 function App() {
   const isConnected = useSelector((state) => state.socketState.isConnected)
-  const chattingUserId = useSelector((state) => state.socketState.chattingUserId)
 
   const dispatch = useDispatch()
 
@@ -46,8 +45,7 @@ function App() {
         updateChatList({
           userId: msg.fromUserId,
           content: msg.content,
-          sendAt: msg.sendAt,
-          shouldIncr: chattingUserId === msg.fromUserId ? false : true
+          sendAt: msg.sendAt
         })
       )
     }

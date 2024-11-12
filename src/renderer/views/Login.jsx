@@ -50,7 +50,7 @@ function Login() {
           sessionStorage.setItem('token', res.data.data)
           toast.success('登陆成功，正在跳转...')
           await sleep(1000)
-          await window.api.setHomeWindow()
+          window.api.setHomeWindow()
           navigate('/dashboard')
           socket.io.opts.query = {
             token: res.data.data

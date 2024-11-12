@@ -48,6 +48,12 @@ const chatMessageStore = createSlice({
           ? { ...chat, username: action.payload.username, avatar: action.payload.avatar }
           : chat
       )
+    },
+    unreadCountDecr(state, action) {
+      state.chatList = state.chatList.map((chat) =>
+        chat.userId === action.payload ? { ...chat, unreadCount: chat.unreadCount - 1 } : chat
+      )
+      state.unreadChatMessageTotalCount--
     }
   }
 })
@@ -56,11 +62,12 @@ export const {
   chatListInit,
   unreadChatMessageTotalCountInit,
   unreadChatMessageCountReset,
-  updateChatUserInfo
+  updateChatUserInfo,
+  unreadCountDecr
 } = chatMessageStore.actions
 
 const { chatListUpdate, unreadChatMessageTotalCountIncr } = chatMessageStore.actions
-const updateChatList = ({ userId, content, sendAt, shouldIncr }) => {
+const updateChatList = ({ userId, content, sendAt }) => {
   return async (dispatch, getState) => {
     const state = getState()
     const oldChat = state.chatMessage.chatList.find((chat) => chat.userId === userId)
@@ -70,7 +77,7 @@ const updateChatList = ({ userId, content, sendAt, shouldIncr }) => {
         ...oldChat,
         content: content,
         sendAt: sendAt,
-        unreadCount: oldChat.unreadCount + (shouldIncr ? 1 : 0)
+        unreadCount: oldChat.unreadCount + 1
       }
     } else {
       let res = await Api.get('/user/user-info', {
@@ -85,15 +92,12 @@ const updateChatList = ({ userId, content, sendAt, shouldIncr }) => {
         avatar: res.data.data.avatar,
         content: content,
         sendAt: sendAt,
-        unreadCount: shouldIncr ? 1 : 0
+        unreadCount: 1
       }
     }
     dispatch(chatListUpdate(newChat))
-    console.log(shouldIncr)
 
-    if (shouldIncr) {
-      dispatch(unreadChatMessageTotalCountIncr())
-    }
+    dispatch(unreadChatMessageTotalCountIncr())
   }
 }
 

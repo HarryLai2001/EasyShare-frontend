@@ -3,18 +3,11 @@ import { createSlice } from '@reduxjs/toolkit'
 const socketStateStore = createSlice({
   name: 'socketState',
   initialState: {
-    isConnected: false,
-    chattingUserId: -1
+    isConnected: false
   },
   reducers: {
     setConnectState(state, action) {
       state.isConnected = action.payload
-    },
-    setChattingUser(state, action) {
-      state.chattingUserId = action.payload
-    },
-    resetChattingUser(state) {
-      state.chattingUserId = -1
     }
   }
 })

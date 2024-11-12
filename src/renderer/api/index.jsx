@@ -13,7 +13,7 @@ axiosRetry(Api, { retries: 3 })
 
 Api.interceptors.request.use((config) => {
   config.headers['Authorization'] = sessionStorage.getItem('token')
-  /* console.log(config) */
+  console.log(config)
   return config
 })
 

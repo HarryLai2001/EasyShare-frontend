@@ -1,13 +1,13 @@
 import { Button, IconButton, OutlinedInput } from '@material-ui/core'
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded'
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded'
-import KeepAlive, { useActivate, useAliveController } from 'react-activation'
+import KeepAlive, { useAliveController } from 'react-activation'
 import { useParams } from 'react-router-dom'
 import ChatMessageLeft from './ChatMessageLeft'
 import { useDispatch, useSelector } from 'react-redux'
 import ChatMessageRight from './ChatMessageRight'
 import Api from '../../api'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import dateFormat from '../../utils/dateFormat'
 import { flushSync } from 'react-dom'
@@ -17,10 +17,10 @@ import socket from '../../socketio'
 import {
   unreadChatMessageCountReset,
   unreadChatMessageTotalCountInit,
+  unreadCountDecr,
   updateChatList,
   updateChatUserInfo
 } from '../../store/modules/chatMessageStore'
-import { resetChattingUser, setChattingUser } from '../../store/modules/socketStateStore'
 
 function PrivateChat() {
   const { userId } = useParams()
@@ -33,7 +33,8 @@ function PrivateChat() {
   const [lastMessageId, setLastMessageId] = useState(null)
   const [inputContent, setInputContent] = useState('')
   const [isSending, setIsSending] = useState(false)
-  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
+
+  const ref = useRef(null)
 
   const dispatch = useDispatch()
   const { drop } = useAliveController()
@@ -88,33 +89,35 @@ function PrivateChat() {
 
   const onMessage = (msg) => {
     if (msg.fromUserId === parseInt(userId)) {
-      setShouldScrollToBottom(true)
+      ref.current.scrollToBottom(true)
       setChatMessages((prev) => [msg, ...prev])
+      dispatch(unreadCountDecr(parseInt(userId)))
     }
   }
 
   useEffect(() => {
+    Api.put('/chat/read', {
+      userId: parseInt(userId)
+    })
+  }, [chatMessages])
+
+  useLayoutEffect(() => {
     fetchMyInfo()
     fetchUserInfo()
     fetchChatHistory()
     dispatch(unreadChatMessageCountReset(parseInt(userId)))
     dispatch(unreadChatMessageTotalCountInit())
-    dispatch(setChattingUser(parseInt(userId)))
     dispatch(updateChatUserInfo({ userId: userId, username: username, avatar: avatar }))
     socket.on(`chat`, onMessage)
 
     return () => {
       socket.off(`chat`, onMessage)
-      Api.put('/chat/read', {
-        userId: parseInt(userId)
-      })
-      dispatch(resetChattingUser())
     }
   }, [])
 
-  const handleOnScrollToTop = () => {
+  const loadMore = () => {
     if (lastMessageId !== null) {
-      setShouldScrollToBottom(false)
+      ref.current.scrollToBottom(false)
       fetchChatHistory()
     }
   }
@@ -123,7 +126,7 @@ function PrivateChat() {
     flushSync(() => {
       setIsSending(true)
     })
-    setShouldScrollToBottom(true)
+    ref.current.scrollToBottom(true)
     Api.post('/chat/send', {
       content: inputContent,
       toUserId: parseInt(userId)
@@ -137,9 +140,9 @@ function PrivateChat() {
               userId: parseInt(userId),
               content: res.data.data.content,
               sendAt: res.data.data.sendAt,
-              shouldIncr: false
             })
           )
+          dispatch(unreadCountDecr(parseInt(userId)))
         } else {
           toast.error(res.data.message)
         }
@@ -175,7 +178,7 @@ function PrivateChat() {
           </IconButton>
         </div>
         <Divider />
-        <ChatRecord onScrollToTop={handleOnScrollToTop} shouldScrollToBottom={shouldScrollToBottom}>
+        <ChatRecord onScrollToTop={loadMore} ref={ref}>
           {chatMessages.map((message, index) => {
             return message.fromUserId === parseInt(userId) ? (
               <ChatMessageRight

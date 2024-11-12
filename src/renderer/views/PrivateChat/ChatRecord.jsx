@@ -1,21 +1,25 @@
 import { CircularProgress } from '@mui/material'
 import PropTypes from 'prop-types'
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { throttle } from 'lodash'
 
-function ChatRecord({ children, onScrollToTop, shouldScrollToBottom }) {
-  const ref = useRef(null)
-  const endRef = useRef(null)
-  const [initialScroll, setInitialScroll] = useState(true)
+const ChatRecord = forwardRef(function ChatRecord({ children, onScrollToTop }, ref) {
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
+  const scrollRef = useRef(null)
+  const endRef = useRef(null)
+
+  useImperativeHandle(ref, () => ({
+    scrollToBottom: (value) => setShouldScrollToBottom(value)
+  }))
+
   const handleOnScrollToTop = throttle(async () => {
-    if (initialScroll) {
-      setInitialScroll(false)
-      return
-    }
-    if (-ref.current?.scrollTop + ref.current?.clientHeight + 5 >= ref.current?.scrollHeight) {
+    if (
+      -scrollRef.current?.scrollTop + scrollRef.current?.clientHeight + 5 >=
+      scrollRef.current?.scrollHeight
+    ) {
       flushSync(() => setIsLoadingMore(true))
       await onScrollToTop()
       setIsLoadingMore(false)
@@ -30,7 +34,7 @@ function ChatRecord({ children, onScrollToTop, shouldScrollToBottom }) {
 
   return (
     <div
-      ref={ref}
+      ref={scrollRef}
       className="px-20 my-2 flex mb-auto flex-col-reverse overflow-y-auto"
       onScrollCapture={handleOnScrollToTop}
     >
@@ -41,7 +45,7 @@ function ChatRecord({ children, onScrollToTop, shouldScrollToBottom }) {
       </div>
     </div>
   )
-}
+})
 
 ChatRecord.propTypes = {
   children: PropTypes.node,

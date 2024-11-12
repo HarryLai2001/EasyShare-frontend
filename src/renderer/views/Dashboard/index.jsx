@@ -43,7 +43,7 @@ function Dashboard() {
     await Api.put('/user/logout')
     sessionStorage.removeItem('token')
     clear() // 退出登录时清空所有缓存中的KeepAlive
-    await window.api.setLoginWindow()
+    window.api.setLoginWindow()
     window.location.hash = '/login'
   }
 

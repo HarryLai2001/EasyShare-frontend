@@ -9,7 +9,6 @@ function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 500,
         height: 600,
-        resizable: false,
         show: false,
         autoHideMenuBar: true,
         icon: join(__dirname, '../../resources/logo/planet.ico'),
@@ -44,28 +43,25 @@ function createWindow() {
     ipcMain.on('home-window-resize', () => {
         mainWindow.setOpacity(0)
         mainWindow.setSize(1024, 768)
-        mainWindow.setMinimumSize(800, 600)
-        mainWindow.setResizable(false)
         mainWindow.center()
         mainWindow.minimize()
         setTimeout(() => {
             mainWindow.setOpacity(1)
             mainWindow.show()
             mainWindow.focus()
-        }, 500)
+        }, 1000)
     })
 
     ipcMain.on('login-window-resize', () => {
         mainWindow.setOpacity(0)
         mainWindow.setSize(500, 600)
         mainWindow.center()
-        mainWindow.setResizable(false)
         mainWindow.minimize()
         setTimeout(() => {
             mainWindow.setOpacity(1)
             mainWindow.show()
             mainWindow.focus()
-        }, 500)
+        }, 1000)
     })
 
     mainWindow.on('close', () => {
